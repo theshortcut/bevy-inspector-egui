@@ -39,7 +39,7 @@
 use std::any::TypeId;
 
 use bevy_asset::{Asset, AssetServer, Assets, ReflectAsset, UntypedAssetId};
-use bevy_ecs::query::ReadOnlyWorldQuery;
+use bevy_ecs::query::QueryFilter;
 use bevy_ecs::reflect::AppTypeRegistry;
 use bevy_ecs::system::CommandQueue;
 use bevy_ecs::{component::ComponentId, prelude::*};
@@ -110,7 +110,7 @@ pub fn ui_for_resources(world: &mut World, ui: &mut egui::Ui) {
     resources.sort_by(|(name_a, ..), (name_b, ..)| name_a.cmp(name_b));
     for (name, type_id) in resources {
         ui.collapsing(name, |ui| {
-            by_type_id::ui_for_resource(world, type_id, ui, &name, &type_registry);
+            by_type_id::ui_for_resource(world, type_id, ui, name, &type_registry);
         });
     }
 }
@@ -240,7 +240,7 @@ pub fn ui_for_world_entities(world: &mut World, ui: &mut egui::Ui) {
 }
 
 /// Display all entities matching the given filter
-pub fn ui_for_world_entities_filtered<F: ReadOnlyWorldQuery>(
+pub fn ui_for_world_entities_filtered<F: QueryFilter>(
     world: &mut World,
     ui: &mut egui::Ui,
     with_children: bool,

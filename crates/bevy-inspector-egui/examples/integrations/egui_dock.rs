@@ -12,7 +12,7 @@ use bevy_inspector_egui::DefaultInspectorConfigPlugin;
 // use bevy_mod_picking::prelude::*;
 use bevy_egui::EguiSet;
 use bevy_reflect::TypeRegistry;
-use bevy_render::camera::{CameraProjection, Viewport};
+use bevy_render::camera::{CameraProjection, Exposure, Viewport};
 use bevy_window::PrimaryWindow;
 use egui_dock::{DockArea, DockState, NodeIndex, Style};
 use egui_gizmo::{Gizmo, GizmoMode, GizmoOrientation};
@@ -38,6 +38,7 @@ fn main() {
         // .add_systems(Update, handle_pick_events)
         .register_type::<Option<Handle<Image>>>()
         .register_type::<AlphaMode>()
+        .register_type::<Exposure>()
         .run();
 }
 
@@ -108,8 +109,8 @@ fn set_camera_viewport(
 
     let scale_factor = window.scale_factor() * egui_settings.scale_factor;
 
-    let viewport_pos = ui_state.viewport_rect.left_top().to_vec2() * scale_factor as f32;
-    let viewport_size = ui_state.viewport_rect.size() * scale_factor as f32;
+    let viewport_pos = ui_state.viewport_rect.left_top().to_vec2() * scale_factor;
+    let viewport_size = ui_state.viewport_rect.size() * scale_factor;
 
     cam.viewport = Some(Viewport {
         physical_position: UVec2::new(viewport_pos.x as u32, viewport_pos.y as u32),
@@ -118,11 +119,11 @@ fn set_camera_viewport(
     });
 }
 
-fn set_gizmo_mode(input: Res<Input<KeyCode>>, mut ui_state: ResMut<UiState>) {
+fn set_gizmo_mode(input: Res<ButtonInput<KeyCode>>, mut ui_state: ResMut<UiState>) {
     for (key, mode) in [
-        (KeyCode::R, GizmoMode::Rotate),
-        (KeyCode::T, GizmoMode::Translate),
-        (KeyCode::S, GizmoMode::Scale),
+        (KeyCode::KeyR, GizmoMode::Rotate),
+        (KeyCode::KeyT, GizmoMode::Translate),
+        (KeyCode::KeyS, GizmoMode::Scale),
     ] {
         if input.just_pressed(key) {
             ui_state.gizmo_mode = mode;
@@ -380,11 +381,7 @@ fn setup(
     let mut transform = Transform::from_xyz(-box_offset, box_offset, 0.0);
     transform.rotate(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2));
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Box::new(
-            box_size,
-            box_thickness,
-            box_size,
-        ))),
+        mesh: meshes.add(Mesh::from(Cuboid::new(box_size, box_thickness, box_size))),
         transform,
         material: materials.add(StandardMaterial {
             base_color: Color::rgb(0.63, 0.065, 0.05),
@@ -396,11 +393,7 @@ fn setup(
     let mut transform = Transform::from_xyz(box_offset, box_offset, 0.0);
     transform.rotate(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2));
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Box::new(
-            box_size,
-            box_thickness,
-            box_size,
-        ))),
+        mesh: meshes.add(Mesh::from(Cuboid::new(box_size, box_thickness, box_size))),
         transform,
         material: materials.add(StandardMaterial {
             base_color: Color::rgb(0.14, 0.45, 0.091),
@@ -410,7 +403,7 @@ fn setup(
     });
     // bottom - white
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Box::new(
+        mesh: meshes.add(Mesh::from(Cuboid::new(
             box_size + 2.0 * box_thickness,
             box_thickness,
             box_size,
@@ -424,7 +417,7 @@ fn setup(
     // top - white
     let transform = Transform::from_xyz(0.0, 2.0 * box_offset, 0.0);
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Box::new(
+        mesh: meshes.add(Mesh::from(Cuboid::new(
             box_size + 2.0 * box_thickness,
             box_thickness,
             box_size,
@@ -440,7 +433,7 @@ fn setup(
     let mut transform = Transform::from_xyz(0.0, box_offset, -box_offset);
     transform.rotate(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2));
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Box::new(
+        mesh: meshes.add(Mesh::from(Cuboid::new(
             box_size + 2.0 * box_thickness,
             box_thickness,
             box_size + 2.0 * box_thickness,
@@ -461,7 +454,7 @@ fn setup(
     // top light
     commands
         .spawn(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Plane::from_size(0.4))),
+            mesh: meshes.add(Mesh::from(Plane3d::default().mesh().size(0.4, 0.4))),
             transform: Transform::from_matrix(Mat4::from_scale_rotation_translation(
                 Vec3::ONE,
                 Quat::from_rotation_x(std::f32::consts::PI),
@@ -500,6 +493,7 @@ fn setup(
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, box_offset, 4.0)
                 .looking_at(Vec3::new(0.0, box_offset, 0.0), Vec3::Y),
+            exposure: Exposure { ev100: 9.7 },
             ..Default::default()
         },
         MainCamera,

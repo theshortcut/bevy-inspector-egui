@@ -135,7 +135,7 @@ pub fn state_does_not_exist(ui: &mut egui::Ui, name: &str) {
         ),
         (
             FontId::monospace(12.0),
-            &format!(".add_state::<{name}>(..)"),
+            &format!(".init_state::<{name}>(..)"),
         ),
         (FontId::proportional(13.0), "?"),
     ]);

@@ -11,9 +11,7 @@ use std::{marker::PhantomData, sync::Mutex};
 use bevy_app::{Plugin, Update};
 use bevy_asset::Asset;
 use bevy_core::TypeRegistrationPlugin;
-use bevy_ecs::{
-    prelude::*, query::ReadOnlyWorldQuery, schedule::BoxedCondition, system::ReadOnlySystem,
-};
+use bevy_ecs::{prelude::*, query::QueryFilter, schedule::BoxedCondition, system::ReadOnlySystem};
 use bevy_egui::{EguiContext, EguiPlugin};
 use bevy_reflect::Reflect;
 use bevy_window::PrimaryWindow;
@@ -198,7 +196,7 @@ fn inspector_ui<T: Resource + Reflect>(world: &mut World) {
 }
 
 /// Plugin displaying an egui window for an app state.
-/// Remember to call [`App::add_state`](bevy_app::App::add_state) .
+/// Remember to call [`App::init_state`](bevy_app::App::init_state) .
 ///
 /// You can use [`StateInspectorPlugin::run_if`] to control when the window is shown, for example
 /// in combination with `input_toggle_active`.
@@ -211,7 +209,7 @@ fn inspector_ui<T: Resource + Reflect>(world: &mut World) {
 ///     App::new()
 ///         .add_plugins(DefaultPlugins)
 ///         .insert_resource(ClearColor(Color::BLACK))
-///         .add_state::<AppState>()
+///         .init_state::<AppState>()
 ///         .register_type::<AppState>()
 ///         .add_plugins(StateInspectorPlugin::<AppState>::default())
 ///         .run();
@@ -416,7 +414,7 @@ impl<A> FilterQueryInspectorPlugin<A> {
 
 impl<F: 'static> Plugin for FilterQueryInspectorPlugin<F>
 where
-    F: ReadOnlyWorldQuery,
+    F: QueryFilter,
 {
     fn build(&self, app: &mut bevy_app::App) {
         check_default_plugins(app, "FilterQueryInspectorPlugin");
@@ -438,7 +436,7 @@ where
     }
 }
 
-fn entity_query_ui<F: ReadOnlyWorldQuery>(world: &mut World) {
+fn entity_query_ui<F: QueryFilter>(world: &mut World) {
     let egui_context = world
         .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
         .get_single(world);

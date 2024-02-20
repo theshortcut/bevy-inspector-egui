@@ -1,5 +1,7 @@
 use bevy_asset::{Assets, Handle};
+use bevy_ecs::world::World;
 use bevy_ecs::{entity::Entity, system::CommandQueue};
+use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_render::mesh::Mesh;
 use bevy_render::{color::Color, view::RenderLayers};
 use egui::{ecolor::Hsva, Color32};
@@ -57,7 +59,9 @@ pub fn entity_ui(
                     if options.despawnable && world.contains_entity(entity) {
                         if let Some(queue) = queue {
                             if egui_utils::label_button(ui, "✖ Despawn", egui::Color32::RED) {
-                                queue.push(bevy_ecs::system::Despawn { entity });
+                                queue.push(move |world: &mut World| {
+                                    world.entity_mut(entity).despawn_recursive()
+                                })
                             }
                         }
                     }
